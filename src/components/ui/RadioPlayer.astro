@@ -111,6 +111,10 @@
     animation: tape-flow-rev 0.35s linear infinite;
   }
 
+  /* Loading state on play button */
+  @keyframes btn-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+  [data-radio-play][data-loading] { animation: btn-pulse 0.75s ease-in-out infinite; }
+
   /* Volume slider */
   .radio-vol {
     -webkit-appearance: none;
@@ -167,7 +171,13 @@
     const widget = document.querySelector<HTMLElement>('[data-radio-widget]');
     if (!widget) return;
 
+    // Kill any audio from a previous visit to this page (handles fast navigation
+    // where astro:before-swap may not have fully cleaned up).
+    const prev = (window as any).__radioAudio as HTMLAudioElement | undefined;
+    if (prev) { prev.pause(); prev.src = ''; }
+
     const audio       = new Audio();
+    (window as any).__radioAudio = audio;
     audio.volume      = 0.7;
     audio.preload     = 'none';
     // crossOrigin intentionally omitted — radio streams don't set CORS headers
@@ -175,8 +185,10 @@
     let genre   = 'synth';
     let idx     = 0;
     let playing = false;
+    let loading = false;
+    let gen     = 0;              // incremented each loadPlay(); stales old callbacks
+    let intentionalClear = false; // suppresses error events from deliberate src resets
 
-    let pendingPlay: Promise<void> | null = null;
     let retryCount = 0;
 
     // Reel RAF animation
@@ -227,8 +239,19 @@
       if (badgeEl)   badgeEl.textContent = genre === 'afro' ? 'Afro' : genre.charAt(0).toUpperCase() + genre.slice(1);
     }
 
+    function setLoading(state: boolean) {
+      loading = state;
+      if (state) {
+        if (playIcon) playIcon.innerHTML = '&#x2026;';
+        playBtn?.setAttribute('data-loading', '');
+      } else {
+        playBtn?.removeAttribute('data-loading');
+      }
+    }
+
     function setPlayState(state: boolean) {
       playing = state;
+      setLoading(false);
       if (playIcon) playIcon.innerHTML = state ? '&#9632;' : '&#9654;';
       if (state) startReels(); else stopReels();
       tapePath?.classList.toggle('tape-moving', state);
@@ -236,19 +259,23 @@
     }
 
     function loadPlay() {
+      intentionalClear = true;
       audio.pause();
       audio.src = '';
+      intentionalClear = false;
       audio.src = current().url;
       audio.load();
+      setLoading(true);
 
-      pendingPlay = audio.play();
-      pendingPlay
+      const thisGen = ++gen;
+      audio.play()
         .then(() => {
-          pendingPlay = null;
+          if (thisGen !== gen) return; // stale — newer loadPlay() has taken over
           setPlayState(true);
         })
         .catch((err: Error) => {
-          pendingPlay = null;
+          if (thisGen !== gen) return; // stale
+          setLoading(false);
           if (err.name === 'AbortError') return;
           nextStation();
         });
@@ -264,7 +291,7 @@
       }
       idx = (idx + 1) % list.length;
       renderInfo();
-      if (playing) loadPlay();
+      if (playing || loading) loadPlay();
     }
 
     function switchGenre(g: string) {
@@ -278,16 +305,24 @@
         tab.classList.toggle('bg-black/[0.10]', active);
         tab.classList.toggle('text-black/40',  !active);
       });
-      if (playing) loadPlay();
+      // gen increment inside loadPlay() stales any in-flight callback from old genre
+      if (playing || loading) loadPlay();
     }
 
     // Event listeners
     playBtn?.addEventListener('click', () => {
+      if (loading) return; // ignore clicks while buffering
       if (playing) { audio.pause(); setPlayState(false); }
       else loadPlay();
     });
 
-    nextBtn?.addEventListener('click', nextStation);
+    // User-initiated next: advance station directly, no retryCount involvement
+    nextBtn?.addEventListener('click', () => {
+      retryCount = 0;
+      idx = (idx + 1) % STATIONS[genre].length;
+      renderInfo();
+      if (playing || loading) loadPlay();
+    });
 
     volEl?.addEventListener('input', () => {
       audio.volume = parseFloat(volEl.value);
@@ -301,7 +336,8 @@
     });
 
     audio.addEventListener('error', () => {
-      if (playing || pendingPlay) nextStation();
+      if (intentionalClear) return; // ignore errors from deliberate src resets
+      if (playing || loading) nextStation();
     });
     audio.addEventListener('ended', () => setPlayState(false));
 
@@ -309,10 +345,12 @@
 
     // Cleanup on page navigation
     document.addEventListener('astro:before-swap', () => {
+      gen++; // invalidate any in-flight promise callbacks
       stopReels();
-      pendingPlay = null;
+      intentionalClear = true;
       audio.pause();
       audio.src = '';
+      intentionalClear = false;
       audio.load();
     }, { once: true });
   }
