@@ -67,12 +67,14 @@ import Button from "../ui/Button.astro";
       return;
     }
 
-    const GLITCH = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%&*+-/\\░▒▓";
-    const DECODE_MS = 1600; // decode duration per line
-    const STAGGER_MS = 350; // delay between lines
+    const GLITCH = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%+-=";
+    const DECODE_MS = 1600;
+    const STAGGER_MS = 350;
+    const CYCLE_INTERVAL = 45; // ~22Hz per character — smooth, intentional cycling
 
-    // Store originals, scramble, then reveal (prevents unscrambled flash)
     const originals = Array.from(lines).map((line) => line.textContent ?? "");
+
+    // Initial scramble before clip-path reveal
     lines.forEach((line, i) => {
       line.textContent = originals[i]
         .split("")
@@ -83,6 +85,27 @@ import Button from "../ui/Button.astro";
 
     const t0 = performance.now();
     const lineStarts = originals.map((_, i) => t0 + i * STAGGER_MS);
+
+    // Per-character settle timestamps with organic jitter (±10% of DECODE_MS)
+    const settleAt = originals.map((orig, li) =>
+      orig.split("").map((ch, j) => {
+        if (ch === " ") return 0;
+        const base = lineStarts[li] + (j / Math.max(orig.length - 1, 1)) * DECODE_MS;
+        const jitter = (Math.random() - 0.5) * DECODE_MS * 0.18;
+        return base + jitter;
+      })
+    );
+
+    // Cached glyphs — each char holds its current scramble value between ticks
+    const currentChars = originals.map((orig) =>
+      orig.split("").map((ch) =>
+        ch === " " ? " " : GLITCH[Math.floor(Math.random() * GLITCH.length)]
+      )
+    );
+
+    // Last cycle timestamp per character
+    const lastCycle = originals.map((orig) => orig.split("").map(() => 0));
+
     let done = false;
 
     function frame(now: number) {
@@ -90,30 +113,26 @@ import Button from "../ui/Button.astro";
       let allComplete = true;
 
       lines.forEach((line, i) => {
-        const elapsed = now - lineStarts[i];
         const orig = originals[i];
+        let lineComplete = true;
 
-        if (elapsed < 0) {
-          // Pre-start: keep fully scrambled
-          line.textContent = orig
-            .split("")
-            .map((ch) => (ch === " " ? " " : GLITCH[Math.floor(Math.random() * GLITCH.length)]))
-            .join("");
+        const chars = orig.split("").map((ch, j) => {
+          if (ch === " ") return " ";
+          if (now >= settleAt[i][j]) {
+            currentChars[i][j] = ch;
+            return ch;
+          }
+          lineComplete = false;
           allComplete = false;
-          return;
-        }
+          // Throttle: only pick a new glyph every CYCLE_INTERVAL ms
+          if (now - lastCycle[i][j] >= CYCLE_INTERVAL) {
+            lastCycle[i][j] = now;
+            currentChars[i][j] = GLITCH[Math.floor(Math.random() * GLITCH.length)];
+          }
+          return currentChars[i][j];
+        });
 
-        const progress = Math.min(1, elapsed / DECODE_MS);
-        if (progress < 1) allComplete = false;
-        const revealed = Math.floor(progress * orig.length);
-
-        line.textContent = orig
-          .split("")
-          .map((ch, j) => {
-            if (ch === " ") return " ";
-            return j < revealed ? ch : GLITCH[Math.floor(Math.random() * GLITCH.length)];
-          })
-          .join("");
+        line.textContent = chars.join("");
       });
 
       if (allComplete) {
@@ -132,4 +151,29 @@ import Button from "../ui/Button.astro";
   }
 
   document.addEventListener("astro:page-load", initHero);
+
+  // Smooth scroll for anchor links within the hero
+  document.addEventListener("astro:page-load", () => {
+    document.querySelectorAll<HTMLAnchorElement>('a[href^="#"]').forEach((anchor) => {
+      anchor.addEventListener("click", (e) => {
+        const target = document.querySelector(anchor.getAttribute("href")!);
+        if (!target) return;
+        e.preventDefault();
+        const start = window.scrollY;
+        const end = (target as HTMLElement).getBoundingClientRect().top + start;
+        const duration = 1100; // ms
+        const t0 = performance.now();
+        (function step(now: number) {
+          const elapsed = now - t0;
+          const progress = Math.min(elapsed / duration, 1);
+          // ease-in-out cubic
+          const ease = progress < 0.5
+            ? 4 * progress * progress * progress
+            : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+          window.scrollTo(0, start + (end - start) * ease);
+          if (progress < 1) requestAnimationFrame(step);
+        })(t0);
+      });
+    });
+  });
 </script>
