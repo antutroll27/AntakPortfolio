@@ -1,0 +1,132 @@
+---
+---
+
+<div class="bg-[#dedad3] border border-black/30" data-world-clock>
+
+  <!-- Header bar -->
+  <div class="flex items-center justify-between border-b border-black/20 px-3.5 py-2">
+    <span class="font-montserrat text-[0.52rem] uppercase tracking-[0.25em] text-black/80">/ Clock</span>
+    <span class="font-necto text-[0.52rem] text-black/70" data-clock-date>—</span>
+  </div>
+
+  <!-- Large local time display -->
+  <div class="px-3.5 py-4">
+    <p class="font-montserrat text-[0.46rem] uppercase tracking-[0.2em] text-black/65 mb-1.5">Local Time</p>
+    <div class="flex items-baseline gap-1">
+      <span class="font-necto text-[2.2rem] leading-none tabular-nums text-black" data-clock-local-hm>00:00</span>
+      <span class="font-necto text-[1rem] leading-none tabular-nums text-black/70" data-clock-local-s>:00</span>
+    </div>
+  </div>
+
+  <!-- Divider -->
+  <div class="border-t border-black/20"></div>
+
+  <!-- Timezone rows -->
+  <div class="divide-y divide-black/15">
+
+    <!-- London -->
+    <div class="flex items-center gap-3 px-3.5 py-2.5">
+      <span class="w-[72px] flex-shrink-0 font-montserrat text-[0.5rem] uppercase tracking-[0.1em] text-black/75">London</span>
+      <span class="w-[44px] flex-shrink-0 font-necto text-[0.8rem] tabular-nums text-black" data-clock-tz="Europe/London">00:00</span>
+      <div class="flex-1 h-[3px] bg-black/[0.18] relative overflow-hidden">
+        <div class="absolute inset-y-0 left-0 transition-none" style="width:0%;background-color:rgba(13,13,15,0.55)" data-clock-bar="Europe/London"></div>
+      </div>
+    </div>
+
+    <!-- New York -->
+    <div class="flex items-center gap-3 px-3.5 py-2.5">
+      <span class="w-[72px] flex-shrink-0 font-montserrat text-[0.5rem] uppercase tracking-[0.1em] text-black/75">New York</span>
+      <span class="w-[44px] flex-shrink-0 font-necto text-[0.8rem] tabular-nums text-black" data-clock-tz="America/New_York">00:00</span>
+      <div class="flex-1 h-[3px] bg-black/[0.18] relative overflow-hidden">
+        <div class="absolute inset-y-0 left-0 transition-none" style="width:0%;background-color:rgba(13,13,15,0.55)" data-clock-bar="America/New_York"></div>
+      </div>
+    </div>
+
+    <!-- Tokyo -->
+    <div class="flex items-center gap-3 px-3.5 py-2.5">
+      <span class="w-[72px] flex-shrink-0 font-montserrat text-[0.5rem] uppercase tracking-[0.1em] text-black/75">Tokyo</span>
+      <span class="w-[44px] flex-shrink-0 font-necto text-[0.8rem] tabular-nums text-black" data-clock-tz="Asia/Tokyo">00:00</span>
+      <div class="flex-1 h-[3px] bg-black/[0.18] relative overflow-hidden">
+        <div class="absolute inset-y-0 left-0 transition-none" style="width:0%;background-color:rgba(13,13,15,0.55)" data-clock-bar="Asia/Tokyo"></div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+  function initClock() {
+    document.querySelectorAll<HTMLElement>('[data-world-clock]').forEach(widget => {
+      const dateEl    = widget.querySelector<HTMLElement>('[data-clock-date]');
+      const localHmEl = widget.querySelector<HTMLElement>('[data-clock-local-hm]');
+      const localSEl  = widget.querySelector<HTMLElement>('[data-clock-local-s]');
+      const tzEls     = widget.querySelectorAll<HTMLElement>('[data-clock-tz]');
+      const barEls    = widget.querySelectorAll<HTMLElement>('[data-clock-bar]');
+
+      function pad(n: number): string {
+        return String(n).padStart(2, '0');
+      }
+
+      function tick() {
+        const now = new Date();
+
+        // Date: "08 MAR 25"
+        if (dateEl) {
+          dateEl.textContent = now.toLocaleDateString('en-GB', {
+            day: '2-digit',
+            month: 'short',
+            year: '2-digit',
+          }).toUpperCase();
+        }
+
+        // Local HH:MM
+        if (localHmEl) {
+          localHmEl.textContent = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+        }
+
+        // Local :SS
+        if (localSEl) {
+          localSEl.textContent = `:${pad(now.getSeconds())}`;
+        }
+
+        // Timezone times
+        tzEls.forEach(el => {
+          const tz = el.dataset.clockTz!;
+          el.textContent = now.toLocaleTimeString('en-GB', {
+            timeZone: tz,
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false,
+          });
+        });
+
+        // Progress bars + day/night colour
+        barEls.forEach(barEl => {
+          const tz = barEl.dataset.clockBar!;
+          const full = now.toLocaleTimeString('en-GB', {
+            timeZone: tz,
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false,
+          });
+          const [h, m, s] = full.split(':').map(Number);
+          const pct = ((h * 3600 + m * 60 + s) / 86400) * 100;
+          barEl.style.width = pct + '%';
+          // Teal for night hours (before 7am or after 8pm), dark for daytime
+          const isNight = h < 7 || h >= 20;
+          barEl.style.backgroundColor = isNight
+            ? 'rgba(34,164,156,0.85)'
+            : 'rgba(13,13,15,0.55)';
+        });
+      }
+
+      tick();
+      const id = setInterval(tick, 1000);
+      document.addEventListener('astro:before-swap', () => clearInterval(id), { once: true });
+    });
+  }
+
+  document.addEventListener('astro:page-load', initClock);
+</script>
