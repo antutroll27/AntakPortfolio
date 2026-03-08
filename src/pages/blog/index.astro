@@ -18,8 +18,8 @@ function padCount(n: number): string {
 ---
 
 <BaseLayout title="Blog — Antariksha Kumar" description="Writing on design, code, and interactive storytelling.">
-  <!-- ZONE 1: Offwhite header -->
-  <section class="bg-offwhite px-4 pt-28 md:px-8">
+  <!-- Blog page — single offwhite section to prevent body-bg bleed -->
+  <section class="bg-offwhite px-4 pt-28 pb-20 md:px-8">
     <div class="mx-auto w-full max-w-5xl relative">
       <!-- Ghost numeral -->
       <span class="font-necto text-[clamp(8rem,22vw,20rem)] leading-none text-black/[0.04] pointer-events-none select-none absolute right-0 top-0 z-0" aria-hidden="true">
@@ -47,10 +47,8 @@ function padCount(n: number): string {
         </p>
       </div>
     </div>
-  </section>
 
-  <!-- ZONE 2: Post listing -->
-  <section class="bg-offwhite px-4 pb-20 md:px-8">
+    <!-- Post listing -->
     <div class="mx-auto w-full max-w-5xl mt-16">
       {posts.map((post, i) => (
         <a

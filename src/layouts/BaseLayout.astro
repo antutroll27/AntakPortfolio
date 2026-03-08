@@ -4,7 +4,6 @@ import Nav from '../components/layout/Nav.astro';
 import Footer from '../components/layout/Footer.astro';
 import CursorRing from '../components/ui/CursorRing.astro';
 import GridLines from '../components/ui/GridLines.astro';
-import LoadingScreen from '../components/ui/LoadingScreen.astro';
 import '../styles/global.css';
 
 interface Props {
@@ -35,7 +34,6 @@ const {
   </head>
   <body class="bg-black text-offwhite selection:bg-teal/20">
     <GridLines />
-    <LoadingScreen />
     <Nav />
     <CursorRing />
     <main>

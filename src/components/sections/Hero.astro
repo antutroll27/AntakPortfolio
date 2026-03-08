@@ -1,6 +1,5 @@
 ---
 import GhostScene from "../three/GhostScene.astro";
-import SectionLabel from "../ui/SectionLabel.astro";
 import Button from "../ui/Button.astro";
 ---
 
@@ -51,56 +50,85 @@ import Button from "../ui/Button.astro";
 <script>
   function initHero() {
     const lines = document.querySelectorAll<HTMLElement>(".hero-line");
-    if (!lines.length) return; // not on home page
+    if (!lines.length) return;
 
     const copy = document.querySelectorAll<HTMLElement>(".hero-copy");
     const scrollPrompt = document.querySelector<HTMLElement>(".hero-scroll");
-    const reduceMotion = window.matchMedia(
-      "(prefers-reduced-motion: reduce)",
-    ).matches;
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    window.addEventListener("scroll", () => {
+      if (!scrollPrompt) return;
+      scrollPrompt.classList.toggle("opacity-0", window.scrollY > 100);
+    }, { passive: true });
 
     if (reduceMotion) {
-      lines.forEach((line) => {
-        line.style.clipPath = "inset(0% 0 0 0)";
-      });
-      copy.forEach((item) => {
-        item.style.opacity = "1";
-      });
-    } else {
-      import("gsap")
-        .then(({ gsap }) => {
-          gsap
-            .timeline({ delay: 0.15 })
-            .to(lines, {
-              clipPath: "inset(0% 0 0 0)",
-              stagger: 0.12,
-              duration: 0.9,
-              ease: "power3.out",
-            })
-            .to(
-              copy,
-              { opacity: 1, y: 0, duration: 0.5, stagger: 0.08 },
-              "-=0.3",
-            );
-        })
-        .catch(() => {
-          lines.forEach((line) => {
-            line.style.clipPath = "inset(0% 0 0 0)";
-          });
-          copy.forEach((item) => {
-            item.style.opacity = "1";
-          });
-        });
+      lines.forEach((line) => { line.style.clipPath = "inset(0% 0 0 0)"; });
+      copy.forEach((item) => { item.style.opacity = "1"; });
+      return;
     }
 
-    window.addEventListener(
-      "scroll",
-      () => {
-        if (!scrollPrompt) return;
-        scrollPrompt.classList.toggle("opacity-0", window.scrollY > 100);
-      },
-      { passive: true },
-    );
+    const GLITCH = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%&*+-/\\░▒▓";
+    const DECODE_MS = 1600; // decode duration per line
+    const STAGGER_MS = 350; // delay between lines
+
+    // Store originals, scramble, then reveal (prevents unscrambled flash)
+    const originals = Array.from(lines).map((line) => line.textContent ?? "");
+    lines.forEach((line, i) => {
+      line.textContent = originals[i]
+        .split("")
+        .map((ch) => (ch === " " ? " " : GLITCH[Math.floor(Math.random() * GLITCH.length)]))
+        .join("");
+      line.style.clipPath = "inset(0% 0 0 0)";
+    });
+
+    const t0 = performance.now();
+    const lineStarts = originals.map((_, i) => t0 + i * STAGGER_MS);
+    let done = false;
+
+    function frame(now: number) {
+      if (done) return;
+      let allComplete = true;
+
+      lines.forEach((line, i) => {
+        const elapsed = now - lineStarts[i];
+        const orig = originals[i];
+
+        if (elapsed < 0) {
+          // Pre-start: keep fully scrambled
+          line.textContent = orig
+            .split("")
+            .map((ch) => (ch === " " ? " " : GLITCH[Math.floor(Math.random() * GLITCH.length)]))
+            .join("");
+          allComplete = false;
+          return;
+        }
+
+        const progress = Math.min(1, elapsed / DECODE_MS);
+        if (progress < 1) allComplete = false;
+        const revealed = Math.floor(progress * orig.length);
+
+        line.textContent = orig
+          .split("")
+          .map((ch, j) => {
+            if (ch === " ") return " ";
+            return j < revealed ? ch : GLITCH[Math.floor(Math.random() * GLITCH.length)];
+          })
+          .join("");
+      });
+
+      if (allComplete) {
+        done = true;
+        lines.forEach((line, i) => { line.textContent = originals[i]; });
+        copy.forEach((item) => {
+          item.style.transition = "opacity 0.5s ease";
+          item.style.opacity = "1";
+        });
+      } else {
+        requestAnimationFrame(frame);
+      }
+    }
+
+    requestAnimationFrame(frame);
   }
 
   document.addEventListener("astro:page-load", initHero);

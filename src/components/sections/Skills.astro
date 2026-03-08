@@ -14,9 +14,9 @@ const ticker =
 <section class="border-b border-grey px-4 py-24 md:px-8" id="skills">
   <div class="mx-auto w-full max-w-7xl">
     <SectionLabel label="Skills & Tools" />
-    <div class="mt-8 grid gap-0 border border-grey md:grid-cols-3">
+    <div class="mt-8 grid gap-0 md:grid-cols-3">
       {Object.entries(columns).map(([label, items], idx) => (
-        <div class:list={['p-6', idx < 2 ? 'md:border-r md:border-grey' : '']}>
+        <div class:list={['p-6', idx < 2 ? '' : '']}>
           <h3 class="font-montserrat text-[0.8rem] uppercase tracking-[0.3em] text-teal">{label}</h3>
           <ul class="mt-4 space-y-2">
             {items.map((item) => (
