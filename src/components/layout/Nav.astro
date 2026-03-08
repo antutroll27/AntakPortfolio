@@ -44,10 +44,10 @@ const path = Astro.url.pathname;
               <a
                 href={href}
                 class:list={[
-                  "flex items-center px-5 font-montserrat text-[0.7rem] uppercase tracking-[0.25em] transition-colors duration-300",
+                  "flex items-center px-5 font-montserrat uppercase tracking-[0.25em] transition-all duration-300",
                   path.startsWith(href)
-                    ? "text-teal"
-                    : "text-offwhite/90 hover:text-teal",
+                    ? "text-teal text-[0.78rem]"
+                    : "text-offwhite/90 hover:text-teal text-[0.7rem]",
                 ]}
                 data-nav-link
                 data-cursor-hover
