@@ -1,0 +1,95 @@
+<div
+  class="pointer-events-none fixed left-0 top-0 z-[9999] [will-change:transform]"
+  style="transform-origin: 0 0"
+  data-cursor-ring
+  transition:persist
+>
+  <svg xmlns="http://www.w3.org/2000/svg" width="22" height="33" viewBox="0 0 22 33" fill="none">
+    <path
+      d="M1.5 1.5 L1.5 28 L7 22 L11.5 31 L15 29.5 L10.5 20.5 L19.5 20.5 Z"
+      fill="#e8e6df"
+      stroke="#1a1a1e"
+      stroke-width="2"
+      stroke-linejoin="round"
+      stroke-linecap="round"
+    />
+  </svg>
+</div>
+
+<style>
+  [data-cursor-ring].is-hovering path {
+    fill: #ffffff;
+  }
+</style>
+
+<script>
+  const ring = document.querySelector<HTMLElement>("[data-cursor-ring]");
+  const root = document.documentElement;
+  const mediaFinePointer = window.matchMedia("(pointer: fine)");
+  const mediaReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+  // @ts-ignore: Property 'connection' does not exist on standard type 'Navigator'
+  const connection = navigator.connection;
+  const saveData = Boolean(
+    connection && "saveData" in connection && connection.saveData,
+  );
+  const lowCpu =
+    typeof navigator.hardwareConcurrency === "number" &&
+    navigator.hardwareConcurrency <= 4;
+
+  const cursorEnhancementAllowed =
+    mediaFinePointer.matches &&
+    !mediaReducedMotion.matches &&
+    !saveData &&
+    !lowCpu;
+
+  if (!ring || !cursorEnhancementAllowed) {
+    root.classList.remove("cursor-enhanced");
+    ring?.remove();
+  } else {
+    root.classList.add("cursor-enhanced");
+    const targets = "a, button, [data-cursor-hover], input, textarea, select";
+    const pointer = { x: window.innerWidth * 0.5, y: window.innerHeight * 0.5 };
+    let rafId: number | null = null;
+    let pendingFrame = false;
+
+    const paintRing = () => {
+      ring.style.transform = `translate(${pointer.x}px, ${pointer.y}px) scale(var(--cursor-scale))`;
+      pendingFrame = false;
+    };
+
+    const schedulePaint = () => {
+      if (pendingFrame) return;
+      pendingFrame = true;
+      rafId = requestAnimationFrame(paintRing);
+    };
+
+    schedulePaint();
+
+    window.addEventListener(
+      "mousemove",
+      (event) => {
+        pointer.x = event.clientX;
+        pointer.y = event.clientY;
+        schedulePaint();
+      },
+      { passive: true },
+    );
+
+    document.addEventListener("mouseover", (event) => {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+      const hoverable = target.closest(targets);
+      ring.classList.toggle("is-hovering", !!hoverable);
+      document.documentElement.style.setProperty(
+        "--cursor-scale",
+        hoverable ? "1.15" : "1",
+      );
+    });
+
+    window.addEventListener("pagehide", () => {
+      if (rafId !== null) {
+        cancelAnimationFrame(rafId);
+      }
+    });
+  }
+</script>

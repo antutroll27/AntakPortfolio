@@ -1,0 +1,32 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('blog');
+  return posts.map((post) => ({
+    params: { slug: post.id },
+    props: { post }
+  }));
+}
+
+const { post } = Astro.props;
+const { Content } = await post.render();
+---
+
+<BaseLayout title={`${post.data.title} — Blog`} description={post.data.excerpt}>
+  <article class="px-4 pb-20 pt-28 md:px-8">
+    <header class="mx-auto max-w-4xl border-b border-grey pb-6">
+      <p class="font-necto text-[0.72rem] uppercase tracking-[0.22em] text-teal">
+        {post.data.date.toISOString().slice(0, 10)} · {post.data.readTime}
+      </p>
+      <h1 class="mt-4 font-serif text-[clamp(2.4rem,6vw,4.5rem)] leading-[1.05]">{post.data.title}</h1>
+      <p class="mt-4 max-w-[68ch] text-[1.05rem] leading-[1.7] text-offwhite/82">{post.data.excerpt}</p>
+    </header>
+
+    <section class="prose prose-invert prose-headings:font-necto prose-headings:uppercase prose-p:max-w-[68ch] prose-p:font-serif prose-p:text-[1.125rem] prose-p:leading-[1.75] prose-pre:border prose-pre:border-grey prose-pre:bg-surface prose-pre:text-teal mx-auto mt-8 max-w-4xl [&>p:first-of-type::first-letter]:float-left [&>p:first-of-type::first-letter]:mr-2 [&>p:first-of-type::first-letter]:font-necto [&>p:first-of-type::first-letter]:text-6xl [&>p:first-of-type::first-letter]:leading-[0.9]">
+      <Content />
+    </section>
+  </article>
+</BaseLayout>
+

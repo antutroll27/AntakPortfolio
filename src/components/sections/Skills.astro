@@ -1,0 +1,47 @@
+---
+import SectionLabel from '../ui/SectionLabel.astro';
+
+const columns = {
+  Design: ['Figma', 'Prototyping', 'Motion Design', 'Design Systems', 'Art Direction'],
+  Engineering: ['Astro.js', 'TypeScript', 'Tailwind CSS', 'Three.js', 'GSAP', 'Motion', 'AR/VR (WebXR)'],
+  Process: ['Design Systems', 'User Research', 'Usability Testing', 'Accessibility', 'Agile / Sprint', 'Cross-func Collab']
+};
+
+const ticker =
+  'ASTRO · TYPESCRIPT · TAILWIND · THREE.JS · GSAP · MOTION · DESIGN SYSTEMS · ACCESSIBILITY · USER RESEARCH ·';
+---
+
+<section class="border-b border-grey px-4 py-24 md:px-8" id="skills">
+  <div class="mx-auto w-full max-w-7xl">
+    <SectionLabel label="Skills & Tools" />
+    <div class="mt-8 grid gap-0 border border-grey md:grid-cols-3">
+      {Object.entries(columns).map(([label, items], idx) => (
+        <div class:list={['p-6', idx < 2 ? 'md:border-r md:border-grey' : '']}>
+          <h3 class="font-montserrat text-[0.8rem] uppercase tracking-[0.3em] text-teal">{label}</h3>
+          <ul class="mt-4 space-y-2">
+            {items.map((item) => (
+              <li class="font-montserrat text-[0.8rem] uppercase tracking-[0.15em] text-offwhite/86">{item}</li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </div>
+    <div class="mt-6 overflow-hidden border-y border-grey py-3">
+      <p class="animate-[marquee_16s_linear_infinite] whitespace-nowrap font-necto text-[0.75rem] uppercase tracking-[0.22em] text-teal/85">
+        {ticker}{ticker}
+      </p>
+    </div>
+  </div>
+</section>
+
+<style>
+  @keyframes marquee {
+    0% {
+      transform: translateX(0%);
+    }
+    100% {
+      transform: translateX(-50%);
+    }
+  }
+</style>
+

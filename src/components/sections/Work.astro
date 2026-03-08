@@ -1,0 +1,53 @@
+---
+import SectionLabel from '../ui/SectionLabel.astro';
+
+const featured = [
+  {
+    number: '01',
+    title: 'Infotik',
+    role: 'Co-Founder · Product · DevOps',
+    href: '/work/infotik'
+  },
+  {
+    number: '02',
+    title: 'VeroCasaAI',
+    role: 'Founder · Full Stack',
+    href: '/work/verocasa-ai'
+  },
+  {
+    number: '03',
+    title: 'Revival Studio',
+    role: 'Design & Dev · In Progress',
+    href: '/work/revival-studio',
+    inProgress: true
+  }
+];
+---
+
+<section class="border-b border-grey px-4 py-24 md:px-8" id="work">
+  <div class="mx-auto w-full max-w-7xl">
+    <SectionLabel label="Work" />
+    <div class="mt-8 flex snap-x snap-mandatory gap-4 overflow-x-auto pb-4" data-work-strip>
+      {featured.map((project) => (
+        <article class="group relative min-h-[390px] min-w-[70vw] snap-start border border-grey bg-surface p-4 transition md:min-w-[45vw]" data-work-card>
+          <div class="mb-4 h-[58%] border border-grey bg-black/60"></div>
+          <div class="section-rule pt-3">
+            <p class="font-necto text-[0.72rem] uppercase tracking-[0.2em] text-teal">/ {project.number}</p>
+            <div class="mt-2 flex items-center justify-between gap-2">
+              <h3 class="font-necto text-2xl uppercase">{project.title}</h3>
+              <a href={project.href} class="font-necto text-[1.2rem]" data-cursor-hover>→</a>
+            </div>
+            <p class="mt-2 font-montserrat text-[0.72rem] uppercase tracking-[0.18em] text-offwhite/75">{project.role}</p>
+            {project.inProgress && (
+              <p class="mt-2 inline-block border border-red px-2 py-1 font-necto text-[0.65rem] uppercase tracking-[0.16em] text-red">
+                In Progress
+              </p>
+            )}
+          </div>
+          <span class="absolute right-4 top-4 h-1 w-1 bg-red"></span>
+        </article>
+      ))}
+    </div>
+  </div>
+</section>
+

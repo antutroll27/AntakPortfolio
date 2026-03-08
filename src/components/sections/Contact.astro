@@ -1,0 +1,74 @@
+---
+import SectionLabel from '../ui/SectionLabel.astro';
+---
+
+<section class="px-4 py-28 md:px-8" id="contact">
+  <div class="mx-auto w-full max-w-5xl">
+    <SectionLabel label="Contact" />
+
+    <h2 class="mt-8 font-necto text-[clamp(2.8rem,8vw,6.5rem)] uppercase leading-[0.9]" data-scramble-text>
+      Let's Build
+      <span class="text-teal">Something</span>
+      Worth Seeing.
+    </h2>
+
+    <div class="mt-10 border-y border-grey py-6">
+      <p class="flex flex-wrap items-center gap-4 font-necto text-[1rem] uppercase tracking-[0.18em] md:text-[1.2rem]">
+        <span id="email">kumarantar98@gmail.com</span>
+        <button
+          type="button"
+          class="border border-teal px-3 py-1 text-[0.7rem] uppercase tracking-[0.22em] text-teal"
+          data-copy-email
+          data-cursor-hover
+        >
+          → Copy
+        </button>
+      </p>
+    </div>
+
+    <div class="mt-8 flex flex-wrap gap-6 border-b border-grey pb-6 font-montserrat text-[0.75rem] uppercase tracking-[0.25em]">
+      <a href="https://www.linkedin.com/in/antarik-k" target="_blank" rel="noreferrer" data-cursor-hover>LinkedIn</a>
+      <a href="https://github.com/antutroll27" target="_blank" rel="noreferrer" data-cursor-hover>GitHub</a>
+    </div>
+  </div>
+</section>
+
+<script>
+  const copyButton = document.querySelector('[data-copy-email]');
+  const email = document.querySelector('#email');
+  copyButton?.addEventListener('click', async () => {
+    if (!email) return;
+    await navigator.clipboard.writeText(email.textContent ?? '');
+    copyButton.textContent = 'Copied ✓';
+    setTimeout(() => {
+      copyButton.textContent = '→ Copy';
+    }, 1400);
+  });
+
+  const target = document.querySelector('[data-scramble-text]');
+  if (target && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    import('gsap').then(({ gsap }) => {
+      const finalText = target.textContent;
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      let frame = 0;
+      const duration = 1.2;
+      gsap.to({}, {
+        duration,
+        onUpdate: () => {
+          frame += 1;
+          const progress = Math.min(frame / 24, 1);
+          target.textContent = [...finalText]
+            .map((char, idx) => {
+              if (char === ' ' || char === '\n') return char;
+              return idx < progress * finalText.length ? finalText[idx] : chars[Math.floor(Math.random() * chars.length)];
+            })
+            .join('');
+        },
+        onComplete: () => {
+          target.textContent = finalText;
+        }
+      });
+    });
+  }
+</script>
+

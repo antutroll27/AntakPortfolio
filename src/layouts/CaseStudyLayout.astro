@@ -1,0 +1,60 @@
+---
+import BaseLayout from './BaseLayout.astro';
+
+interface Props {
+  title: string;
+  description: string;
+  serialNumber: string;
+  role: string;
+  year: string;
+  deliverables: string[];
+}
+
+const { title, description, serialNumber, role, year, deliverables } = Astro.props;
+---
+
+<BaseLayout title={`${title} — Work`} description={description}>
+  <!-- Zone 1: Light offwhite header -->
+  <header class="bg-offwhite px-4 pt-28 md:px-8">
+    <div class="mx-auto max-w-7xl">
+      <div class="flex items-center justify-between border-b border-black/20 pb-3 font-montserrat text-[0.7rem] uppercase tracking-[0.25em]">
+        <a href="/work" data-cursor-hover class="text-black/40 transition-colors hover:text-black">/ Work → {title}</a>
+        <span class="font-necto text-[0.65rem] text-black/30">{serialNumber}</span>
+      </div>
+      <div class="pt-8 pb-12">
+        <h1 class="font-necto text-[clamp(3.5rem,9vw,8rem)] uppercase leading-[0.88] text-black">{title}</h1>
+        <p class="mt-6 max-w-[55ch] font-serif text-[1.125rem] leading-[1.75] text-black/70">{description}</p>
+      </div>
+    </div>
+  </header>
+
+  <!-- Zone 2: Light content body with dark sidebar -->
+  <div class="bg-offwhite px-4 pb-20 md:px-8">
+    <div class="mx-auto max-w-7xl md:grid md:grid-cols-[260px_1fr]">
+      <!-- Left sidebar -->
+      <aside class="border-b border-black/10 py-8 pr-8 font-necto md:border-b-0 md:border-r md:border-black/10">
+        <div class="space-y-6">
+          <div>
+            <p class="text-[0.65rem] uppercase tracking-[0.2em] text-black/40">Year</p>
+            <p class="mt-1 text-[0.85rem] text-black">{year}</p>
+          </div>
+          <div>
+            <p class="text-[0.65rem] uppercase tracking-[0.2em] text-black/40">Role</p>
+            <p class="mt-1 text-[0.85rem] text-black">{role}</p>
+          </div>
+          <div>
+            <p class="text-[0.65rem] uppercase tracking-[0.2em] text-black/40">Deliverables</p>
+            <ul class="mt-1 space-y-1 text-[0.85rem] text-black">
+              {deliverables.map((item) => <li>{item}</li>)}
+            </ul>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Right prose content -->
+      <section class="py-8 md:pl-12 prose prose-headings:font-necto prose-headings:uppercase prose-headings:text-black prose-p:font-serif prose-p:leading-[1.75] prose-p:text-black/80">
+        <slot />
+      </section>
+    </div>
+  </div>
+</BaseLayout>

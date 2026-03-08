@@ -1,0 +1,157 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const stack = [
+  { name: 'Astro.js',    level: 5, category: 'Framework' },
+  { name: 'TypeScript',  level: 5, category: 'Language'  },
+  { name: 'Tailwind CSS',level: 4, category: 'Styling'   },
+  { name: 'GSAP',        level: 4, category: 'Animation' },
+  { name: 'Three.js',    level: 3, category: 'WebGL'     },
+  { name: 'React',       level: 4, category: 'Framework' },
+  { name: 'Figma',       level: 5, category: 'Design'    },
+  { name: 'Motion',      level: 3, category: 'Animation' },
+];
+---
+
+<BaseLayout
+  title="About — Antariksha Kumar"
+  description="UX Engineer and Creative Technologist. MSc HCI, University of Nottingham. Building at the intersection of design rigour and elegant code."
+>
+  <!-- LIGHT SECTION — editorial bio -->
+  <section class="bg-offwhite px-4 pb-20 pt-28 md:px-8">
+    <div class="mx-auto w-full max-w-7xl">
+
+      <div class="mb-10 flex items-center justify-between border-b border-black/15 pb-4">
+        <span class="font-montserrat text-[0.65rem] uppercase tracking-[0.25em] text-black/40">/ About</span>
+        <span class="font-necto text-[0.65rem] text-black/30">A.K — UX Engineer</span>
+      </div>
+
+      <div class="grid gap-16 md:grid-cols-[3fr_2fr] md:gap-20">
+        <div>
+          <h1 class="font-necto text-[clamp(3.5rem,9vw,8rem)] uppercase leading-[0.88] text-black">
+            Design<br />
+            <span style="color: var(--color-teal)">Engineer.</span>
+          </h1>
+
+          <div class="mt-10 max-w-[55ch] space-y-5 text-[1.125rem] leading-[1.8] text-black/75">
+            <p>
+              UX Designer, Front-End Engineer, and Creative Technologist with an MSc in
+              Human-Computer Interaction from the University of Nottingham. I bridge rigorous
+              user-centred research with pixel-perfect interfaces.
+            </p>
+            <p>
+              COO at Infotik. I experiment with AR/VR prototypes, streetwear design at
+              Midnight Drift Club (stealth mode), and AI-driven tools like VeroCasaAI.
+              The goal is always the same: elevate everyday interactions into memorable moments.
+            </p>
+            <p>
+              Award-winning indie film background as lighting and camera assistant.
+              The cinematic eye still shapes every interface decision.
+            </p>
+          </div>
+
+          <p class="mt-8 border-t border-black/15 pt-5 font-necto text-[0.72rem] uppercase tracking-[0.2em] text-black/50">
+            Based in: Nottingham, UK &nbsp;·&nbsp; MSc HCI: Nottingham &nbsp;·&nbsp;
+            <span style="color: var(--color-teal)">Available: Yes</span>
+          </p>
+        </div>
+
+        <!-- Portrait placeholder with corner markers -->
+        <aside class="relative border border-black/20 p-4">
+          <span class="absolute left-2 top-2 font-necto text-[0.65rem] text-black/30">X:00</span>
+          <span class="absolute right-2 top-2 font-necto text-[0.65rem] text-black/30">Y:00</span>
+          <span class="absolute bottom-2 left-2 font-necto text-[0.65rem] text-black/30">Z:00</span>
+          <span class="absolute bottom-2 right-2 font-necto text-[0.65rem] text-black/30">V.01</span>
+          <div class="grid min-h-[360px] place-items-center border border-black/10 bg-black/5">
+            <p class="font-necto text-[0.8rem] uppercase tracking-[0.22em] text-black/30">Portrait</p>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <!-- DARK SECTION — metadata & experience -->
+  <section class="bg-black px-4 py-20 md:px-8">
+    <div class="mx-auto w-full max-w-7xl">
+
+      <!-- Stats row -->
+      <div class="grid gap-8 border-t border-grey pt-10 md:grid-cols-3">
+        <div>
+          <p class="font-necto text-[0.65rem] uppercase tracking-[0.2em] text-grey">Based In</p>
+          <p class="mt-2 font-necto text-[1.1rem] uppercase text-offwhite">Nottingham, UK</p>
+        </div>
+        <div>
+          <p class="font-necto text-[0.65rem] uppercase tracking-[0.2em] text-grey">Education</p>
+          <p class="mt-2 font-necto text-[1.1rem] uppercase text-offwhite">MSc HCI</p>
+          <p class="font-necto text-[0.75rem] uppercase text-teal">University of Nottingham</p>
+        </div>
+        <div>
+          <p class="font-necto text-[0.65rem] uppercase tracking-[0.2em] text-grey">Status</p>
+          <p class="mt-2 flex items-center gap-2 font-necto text-[1.1rem] uppercase text-teal">
+            <span class="inline-block h-2 w-2 animate-pulse rounded-full bg-teal"></span>
+            Available
+          </p>
+        </div>
+      </div>
+
+      <!-- Tech Stack -->
+      <div class="mt-16 border-t border-grey pt-10">
+        <p class="mb-6 font-necto text-[0.65rem] uppercase tracking-[0.2em] text-grey">Tech Stack</p>
+        <div>
+          {stack.map(({ name, level, category }) => (
+            <div class="flex items-center justify-between border-b border-grey py-3">
+              <span class="font-necto text-[0.95rem] uppercase text-offwhite">{name}</span>
+              <div class="flex items-center gap-[3px]">
+                {Array.from({ length: 5 }, (_, i) => (
+                  <span class={`inline-block w-6 h-[3px] ${i < level ? 'bg-teal' : 'bg-grey/20'}`}></span>
+                ))}
+              </div>
+              <span class="font-montserrat text-[0.65rem] uppercase tracking-[0.2em] text-grey">{category}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <!-- Experience -->
+      <div class="mt-16 border-t border-grey pt-10">
+        <p class="mb-6 font-necto text-[0.65rem] uppercase tracking-[0.2em] text-grey">Experience</p>
+        <div class="space-y-0">
+          {[
+            { role: 'COO & Co-Founder', company: 'Infotik', year: '2023–Present' },
+            { role: 'UX Engineer', company: 'Freelance', year: '2021–Present' },
+            { role: 'Lighting & Camera', company: 'Indie Film Production', year: '2019–2022' },
+          ].map(({ role, company, year }) => (
+            <div class="flex items-baseline justify-between border-b border-grey py-4">
+              <div>
+                <span class="font-necto text-[0.95rem] uppercase text-offwhite">{role}</span>
+                <span class="ml-4 font-montserrat text-[0.68rem] uppercase tracking-[0.2em] text-teal">
+                  {company}
+                </span>
+              </div>
+              <span class="font-necto text-[0.72rem] text-grey">{year}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <!-- CTA -->
+      <div class="mt-16 flex items-center gap-6">
+        <a
+          href="/contact"
+          class="border border-teal px-6 py-3 font-necto text-[0.75rem] uppercase tracking-[0.2em] text-teal transition-colors hover:bg-teal hover:text-black"
+          data-cursor-hover
+        >
+          Get In Touch →
+        </a>
+        <a
+          href="/work"
+          class="font-montserrat text-[0.72rem] uppercase tracking-[0.22em] text-offwhite/60 transition-colors hover:text-teal"
+          data-cursor-hover
+        >
+          View Work
+        </a>
+      </div>
+
+    </div>
+  </section>
+</BaseLayout>

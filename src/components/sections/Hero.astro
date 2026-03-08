@@ -1,0 +1,107 @@
+---
+import GhostScene from "../three/GhostScene.astro";
+import SectionLabel from "../ui/SectionLabel.astro";
+import Button from "../ui/Button.astro";
+---
+
+<section
+  class="hero-grain relative isolate min-h-[100dvh] overflow-hidden border-b border-grey"
+  id="top"
+>
+  <GhostScene />
+
+  <div
+    class="relative z-10 mx-auto flex min-h-[100dvh] w-full max-w-7xl flex-col justify-center px-4 pb-16 pt-24 md:px-8 lg:pt-32"
+  >
+    <h1
+      class="mt-4 font-necto text-5xl md:text-7xl lg:text-[7rem] uppercase leading-[0.9] text-offwhite"
+    >
+      <span class="hero-line block [clip-path:inset(100%_0_0_0)]"
+        >Bridging Design,</span
+      >
+      <span class="hero-line block [clip-path:inset(100%_0_0_0)]"
+        >Tech & Cinematography</span
+      >
+      <span class="hero-line block [clip-path:inset(100%_0_0_0)]"
+        >Between Design And Code.</span
+      >
+    </h1>
+
+    <p
+      class="hero-copy mt-8 max-w-3xl text-[1.125rem] leading-[1.75] text-offwhite/85 opacity-0"
+    >
+      I am Antarik and I am merging design, technology, and storytelling into
+      digital experiences with intentional tension and cinematic precision.
+    </p>
+
+    <div class="hero-copy mt-6 flex flex-wrap gap-3 opacity-0">
+      <Button href="/work">→ View Work</Button>
+      <Button href="#about" variant="ghost">↓ About</Button>
+    </div>
+
+    <div
+      class="hero-scroll pointer-events-none absolute bottom-8 right-4 flex flex-col items-center gap-2 font-necto text-[0.62rem] uppercase tracking-[0.3em] text-teal md:right-8"
+    >
+      <span class="[writing-mode:vertical-rl]">Scroll</span>
+      <span class="animate-bounce">↓</span>
+    </div>
+  </div>
+</section>
+
+<script>
+  function initHero() {
+    const lines = document.querySelectorAll<HTMLElement>(".hero-line");
+    if (!lines.length) return; // not on home page
+
+    const copy = document.querySelectorAll<HTMLElement>(".hero-copy");
+    const scrollPrompt = document.querySelector<HTMLElement>(".hero-scroll");
+    const reduceMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+
+    if (reduceMotion) {
+      lines.forEach((line) => {
+        line.style.clipPath = "inset(0% 0 0 0)";
+      });
+      copy.forEach((item) => {
+        item.style.opacity = "1";
+      });
+    } else {
+      import("gsap")
+        .then(({ gsap }) => {
+          gsap
+            .timeline({ delay: 0.15 })
+            .to(lines, {
+              clipPath: "inset(0% 0 0 0)",
+              stagger: 0.12,
+              duration: 0.9,
+              ease: "power3.out",
+            })
+            .to(
+              copy,
+              { opacity: 1, y: 0, duration: 0.5, stagger: 0.08 },
+              "-=0.3",
+            );
+        })
+        .catch(() => {
+          lines.forEach((line) => {
+            line.style.clipPath = "inset(0% 0 0 0)";
+          });
+          copy.forEach((item) => {
+            item.style.opacity = "1";
+          });
+        });
+    }
+
+    window.addEventListener(
+      "scroll",
+      () => {
+        if (!scrollPrompt) return;
+        scrollPrompt.classList.toggle("opacity-0", window.scrollY > 100);
+      },
+      { passive: true },
+    );
+  }
+
+  document.addEventListener("astro:page-load", initHero);
+</script>

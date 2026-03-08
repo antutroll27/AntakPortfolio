@@ -1,0 +1,386 @@
+<!-- MGS-inspired loading screen — only shown on first visit per session -->
+<div
+  id="ls-overlay"
+  class="fixed inset-0 z-[999999] flex flex-col bg-black"
+  aria-hidden="true"
+>
+  <!-- Three.js hologram canvas — background layer -->
+  <canvas id="ls-three" class="pointer-events-none absolute inset-0 h-full w-full opacity-70"></canvas>
+
+  <!-- Scanline sweep -->
+  <div id="ls-scanline" class="pointer-events-none absolute left-0 right-0 h-px bg-teal/25" style="top:0"></div>
+
+  <!-- Top metadata strip -->
+  <div class="flex items-center justify-between border-b border-teal/15 px-6 py-3 md:px-12">
+    <span class="font-necto text-[0.58rem] uppercase tracking-[0.28em] text-teal/50">ANTAKDESIGN.SYS</span>
+    <span class="font-necto text-[0.58rem] text-teal/30" id="ls-hex">0xFF000000</span>
+    <span class="font-necto text-[0.58rem] uppercase tracking-[0.28em] text-teal/50">NODE::ACTIVE</span>
+  </div>
+
+  <!-- Body -->
+  <div class="relative flex flex-1 flex-col justify-between px-6 py-8 md:px-12">
+
+    <!-- Top-left: codec frequency -->
+    <div class="space-y-1">
+      <p class="font-necto text-[0.55rem] uppercase tracking-[0.22em] text-teal/35">CODEC FREQ</p>
+      <p class="font-necto text-[2.8rem] leading-none text-teal/55">140.85</p>
+    </div>
+
+    <!-- Top-right: operative ID -->
+    <div class="absolute right-6 top-8 text-right md:right-12">
+      <p class="font-necto text-[0.55rem] uppercase tracking-[0.22em] text-teal/35">OPERATIVE</p>
+      <p class="mt-1 font-necto text-[0.85rem] uppercase tracking-[0.15em] text-teal/60">A. KUMAR</p>
+      <p class="font-necto text-[0.55rem] uppercase tracking-[0.1em] text-teal/30">UX-ENG / CREATIVE-TECH</p>
+    </div>
+
+    <!-- Center: NOW LOADING -->
+    <div class="absolute inset-0 flex items-center justify-center">
+      <div class="space-y-3 text-center">
+        <p class="font-necto text-[0.6rem] uppercase tracking-[0.55em] text-teal/40">NOW LOADING</p>
+        <!-- Cycling MGS quote — replaced every 300 ms with scramble decode -->
+        <p
+          class="font-necto text-[clamp(1.3rem,3.2vw,2.6rem)] uppercase leading-[1.25] text-offwhite/90 tracking-[0.06em] max-w-[26ch]"
+          id="ls-title"
+          aria-live="polite"
+        >&#8203;</p>
+        <!-- Static brand line below quote -->
+        <p class="font-necto text-[0.62rem] uppercase tracking-[0.32em] text-teal/40 mt-1">ANTAKDESIGN // A·KUMAR</p>
+        <!-- Waveform bars -->
+        <div class="flex items-end justify-center gap-[3px] pt-2" id="ls-wave">
+          {Array.from({length: 12}).map((_, i) => (
+            <span
+              class="block w-[3px] bg-teal/40"
+              style={`height: ${4 + Math.sin(i * 0.8) * 8 + 8}px`}
+              data-wave-i={i}
+            ></span>
+          ))}
+        </div>
+      </div>
+    </div>
+
+    <!-- Right side: vertical data readout -->
+    <div class="absolute right-6 bottom-32 hidden flex-col gap-1 text-right md:flex md:right-12">
+      {['SRC:NOTTINGHAM,UK', 'ROLE:UX-ENGINEER', 'SIG:ENCRYPTED', 'UPLINK:SECURED'].map(line => (
+        <span class="font-necto text-[0.5rem] uppercase tracking-[0.15em] text-teal/25">{line}</span>
+      ))}
+    </div>
+
+    <!-- Bottom: progress + status -->
+    <div class="space-y-3">
+      <!-- Status message -->
+      <p id="ls-status" class="h-4 font-necto text-[0.6rem] uppercase tracking-[0.2em] text-teal/65">
+        INITIALIZING SYSTEM...
+      </p>
+
+      <!-- Segmented block bar (MGS energy-bar style) -->
+      <div class="flex items-center gap-3">
+        <div class="flex flex-1 gap-[2px]" id="ls-blocks"></div>
+        <span id="ls-pct" class="w-12 text-right font-necto text-[0.68rem] tabular-nums text-teal/65">0%</span>
+      </div>
+
+      <!-- Thin solid bar underneath -->
+      <div class="h-px w-full bg-teal/10">
+        <div id="ls-bar" class="h-full bg-teal/40 transition-none" style="width:0%"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Bottom metadata strip -->
+  <div class="flex items-center justify-between border-t border-teal/15 px-6 py-3 md:px-12">
+    <span class="font-necto text-[0.55rem] uppercase tracking-[0.25em] text-teal/30">MEMORY::LOADING</span>
+    <span class="font-necto text-[0.55rem] text-teal/20" id="ls-addr">0x0000</span>
+    <span class="font-necto text-[0.55rem] uppercase tracking-[0.25em] text-teal/30">©2025 AK</span>
+  </div>
+</div>
+
+<script>
+  // ── Fix 1: kill any re-injected overlay on View Transition swaps ──────────
+  document.addEventListener('astro:after-swap', () => {
+    document.getElementById('ls-overlay')?.remove();
+  });
+
+  // ── Fix 2: robust init — no throws, defensive element lookups ─────────────
+  const overlay  = document.getElementById('ls-overlay');
+  const blocksEl = document.getElementById('ls-blocks');
+  const pctEl    = document.getElementById('ls-pct');
+  const statusEl = document.getElementById('ls-status');
+  const barEl    = document.getElementById('ls-bar');
+  const hexEl    = document.getElementById('ls-hex');
+  const addrEl   = document.getElementById('ls-addr');
+  const scanline = document.getElementById('ls-scanline');
+
+  // If any critical element is missing, bail silently
+  if (!overlay || !blocksEl || !pctEl || !statusEl || !barEl || !hexEl || !addrEl || !scanline) {
+    overlay?.remove();
+  } else if (sessionStorage.getItem('ls-shown')) {
+    // Already shown this session — hide immediately
+    overlay.remove();
+  } else {
+    sessionStorage.setItem('ls-shown', '1');
+    animate(overlay, blocksEl, pctEl, statusEl, barEl, hexEl, addrEl, scanline);
+  }
+
+  function animate(
+    overlay: HTMLElement,
+    blocksEl: HTMLElement,
+    pctEl: HTMLElement,
+    statusEl: HTMLElement,
+    barEl: HTMLElement,
+    hexEl: HTMLElement,
+    addrEl: HTMLElement,
+    scanline: HTMLElement,
+  ) {
+    const BLOCKS   = 28;
+    const DURATION = 1800; // ms total — slower for first visit
+    const statuses = [
+      'INITIALIZING NEURAL INTERFACE...',
+      'LOADING CODEC FREQUENCIES...',
+      'ESTABLISHING ENCRYPTED UPLINK...',
+      'RENDERING GHOST MATRIX...',
+      'CALIBRATING STEALTH FIELD...',
+      'DECRYPTING PORTFOLIO DATA...',
+      'LOADING ASSETS :: PASS 1/2...',
+      'LOADING ASSETS :: PASS 2/2...',
+      'ACCESS GRANTED.',
+    ];
+
+    // ── MGS quote cycling with scramble decode ─────────────────────────────
+    const GLITCH = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%&*+-/\\░▒▓';
+    const MGS_QUOTES = [
+      'KEPT YOU WAITING, HUH?',
+      'OUTER HEAVEN',
+      'WAR HAS CHANGED.',
+      'ALL ENEMIES NEUTRALIZED.',
+      'CODEC // ESTABLISHED',
+      'PRETTY GOOD.',
+    ];
+    const QUOTE_SLOT = DURATION / MGS_QUOTES.length; // 300 ms each
+
+    const titleEl = overlay.querySelector<HTMLElement>('#ls-title');
+
+    function scramble(target: string, revealedCount: number): string {
+      return target.split('').map((ch, i) => {
+        if (ch === ' ') return ' ';
+        if (i < revealedCount) return ch;
+        return GLITCH[Math.floor(Math.random() * GLITCH.length)];
+      }).join('');
+    }
+
+    // Build block segments
+    for (let i = 0; i < BLOCKS; i++) {
+      const s = document.createElement('span');
+      s.style.cssText = 'display:block; flex:1 1 0%; height:6px; background:rgba(44,184,176,0.12)';
+      blocksEl.appendChild(s);
+    }
+    const blockEls = Array.from(blocksEl.children) as HTMLElement[];
+
+    // Waveform elements
+    const waveEls = Array.from(
+      overlay.querySelectorAll('[data-wave-i]')
+    ) as HTMLElement[];
+
+    const startTime  = performance.now();
+    let   hexTick    = 0;
+    let   waveTick   = 0;
+    let   scanY      = 0;
+    let   prevStatus = -1;
+    let   done       = false;
+
+    function frame(now: number) {
+      if (done) return;
+
+      const elapsed  = now - startTime;
+      const progress = Math.min(1, elapsed / DURATION);
+      const pct      = Math.round(progress * 100);
+
+      // ── Progress bar & percentage ──────────────────────────────────────────
+      pctEl.textContent = `${pct}%`;
+      barEl.style.width = `${pct}%`;
+
+      // ── Block segments ─────────────────────────────────────────────────────
+      const filled = Math.floor(progress * BLOCKS);
+      blockEls.forEach((b, i) => {
+        b.style.background = i < filled
+          ? 'rgb(44 184 176)'
+          : 'rgba(44,184,176,0.12)';
+      });
+
+      // ── Status messages ────────────────────────────────────────────────────
+      const si = Math.min(statuses.length - 1, Math.floor(progress * statuses.length));
+      if (si !== prevStatus) { prevStatus = si; statusEl.textContent = statuses[si]; }
+
+      // ── Cycling MGS quotes with scramble decode ───────────────────────────
+      if (titleEl) {
+        const slotIdx   = Math.min(MGS_QUOTES.length - 1, Math.floor(elapsed / QUOTE_SLOT));
+        const slotProg  = (elapsed % QUOTE_SLOT) / QUOTE_SLOT;          // 0→1 within each slot
+        const quote     = MGS_QUOTES[slotIdx];
+        const revealed  = Math.floor(Math.min(1, slotProg / 0.55) * quote.length); // decode in first 55%
+        titleEl.textContent = scramble(quote, revealed);
+      }
+
+      // ── Scanline sweep (every frame) ───────────────────────────────────────
+      scanY = (scanY + 5) % window.innerHeight;
+      scanline.style.top = `${scanY}px`;
+
+      // ── Hex flicker (every ~70 ms ≈ every 4 frames at 60 fps) ─────────────
+      hexTick++;
+      if (hexTick % 4 === 0) {
+        hexEl.textContent  = '0x' + (Math.random() * 0xFFFFFFFF >>> 0).toString(16).toUpperCase().padStart(8,'0');
+        addrEl.textContent = '0x' + (Math.random() * 0xFFFF >>> 0).toString(16).toUpperCase().padStart(4,'0');
+      }
+
+      // ── Waveform pulse ─────────────────────────────────────────────────────
+      waveTick++;
+      if (waveTick % 3 === 0) {
+        waveEls.forEach((el, i) => {
+          const h = 6 + Math.abs(Math.sin(waveTick * 0.06 + i * 0.7)) * 14;
+          el.style.height = `${h}px`;
+        });
+      }
+
+      if (progress < 1) {
+        requestAnimationFrame(frame);
+      } else {
+        done = true;
+        // Hold 300 ms then slide screen upward
+        setTimeout(() => {
+          overlay.style.transition = 'transform 0.6s cubic-bezier(0.76,0,0.24,1), opacity 0.45s ease';
+          overlay.style.transform  = 'translateY(-100%)';
+          overlay.style.opacity    = '0';
+          setTimeout(() => overlay.remove(), 680);
+        }, 300);
+      }
+    }
+
+    requestAnimationFrame(frame);
+  }
+</script>
+
+<script>
+  // ── MGS hologram suits (Three.js) ─────────────────────────────────────────
+  import * as THREE from 'three';
+
+  const canvas = document.getElementById('ls-three') as HTMLCanvasElement | null;
+  if (!canvas) throw new Error('ls-three canvas missing');
+
+  const W = canvas.clientWidth  || window.innerWidth;
+  const H = canvas.clientHeight || window.innerHeight;
+
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  renderer.setClearColor(0x000000, 0);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+  renderer.setSize(W, H, false);
+
+  const scene  = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(42, W / H, 0.1, 100);
+  camera.position.set(0, 0.2, 6.5);
+
+  // Helpers
+  const wire = (geo: THREE.BufferGeometry, hex: string, opacity = 0.75) =>
+    new THREE.LineSegments(
+      new THREE.WireframeGeometry(geo),
+      new THREE.LineBasicMaterial({ color: hex, transparent: true, opacity })
+    );
+
+  function buildHumanoid(hex: string) {
+    const g = new THREE.Group();
+    const add = (geo: THREE.BufferGeometry, px = 0, py = 0, pz = 0, rx = 0, rz = 0) => {
+      const m = wire(geo, hex);
+      m.position.set(px, py, pz);
+      m.rotation.set(rx, 0, rz);
+      g.add(m);
+    };
+    // Head
+    add(new THREE.SphereGeometry(0.2, 10, 8),   0, 1.08, 0);
+    // Neck
+    add(new THREE.CylinderGeometry(0.07, 0.07, 0.17, 6), 0, 0.84, 0);
+    // Torso
+    add(new THREE.BoxGeometry(0.54, 0.74, 0.26), 0, 0.38, 0);
+    // Hips
+    add(new THREE.BoxGeometry(0.44, 0.16, 0.24), 0, 0.0, 0);
+    // Upper legs
+    add(new THREE.CapsuleGeometry(0.1, 0.42, 4, 6),  -0.14, -0.37, 0);
+    add(new THREE.CapsuleGeometry(0.1, 0.42, 4, 6),   0.14, -0.37, 0);
+    // Lower legs
+    add(new THREE.CapsuleGeometry(0.08, 0.38, 4, 6), -0.14, -0.87, 0);
+    add(new THREE.CapsuleGeometry(0.08, 0.38, 4, 6),  0.14, -0.87, 0);
+    // Upper arms
+    add(new THREE.CapsuleGeometry(0.07, 0.38, 4, 6), -0.38, 0.48, 0, 0,  Math.PI / 6);
+    add(new THREE.CapsuleGeometry(0.07, 0.38, 4, 6),  0.38, 0.48, 0, 0, -Math.PI / 6);
+    // Lower arms
+    add(new THREE.CapsuleGeometry(0.055, 0.32, 4, 6), -0.56, 0.16, 0, 0,  Math.PI / 10);
+    add(new THREE.CapsuleGeometry(0.055, 0.32, 4, 6),  0.56, 0.16, 0, 0, -Math.PI / 10);
+    return g;
+  }
+
+  const figDefs = [
+    { hex: '#2CB8B0', x:  0,    z:  0,   ry: 0,           bob: 0.7,  scale: 1.0 },
+    { hex: '#7EB8D4', x: -2.4,  z: -0.4, ry: 0.4,         bob: 0.85, scale: 0.88 },
+    { hex: '#2A9D8F', x:  2.4,  z: -0.4, ry: -0.4,        bob: 0.65, scale: 0.88 },
+  ];
+
+  const figs = figDefs.map(({ hex, x, z, ry, scale }) => {
+    const fig = buildHumanoid(hex);
+    fig.position.set(x, 0, z);
+    fig.rotation.y = ry;
+    fig.scale.setScalar(scale);
+    scene.add(fig);
+    return fig;
+  });
+
+  // Horizontal hologram scan stripes (sweep up/down through figures)
+  const scanMat = new THREE.MeshBasicMaterial({
+    color: '#2CB8B0', transparent: true, opacity: 0.07, side: THREE.DoubleSide,
+  });
+  const scanPlanes = Array.from({ length: 4 }, (_, i) => {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(10, 0.018), scanMat.clone());
+    m.rotation.x = -Math.PI / 2;
+    scene.add(m);
+    return { m, offset: (i / 4) * Math.PI * 2 };
+  });
+
+  // Ground grid
+  const grid = new THREE.GridHelper(12, 22, '#1A4A47', '#0D2826');
+  grid.position.y = -1.35;
+  scene.add(grid);
+
+  // Lighting
+  scene.add(new THREE.AmbientLight('#0D1520', 0.5));
+  const pt = new THREE.PointLight('#2CB8B0', 1.2, 14);
+  pt.position.set(0, 2, 3);
+  scene.add(pt);
+
+  // Animate
+  const start = performance.now();
+  let alive = true;
+
+  // Clean up when overlay is removed (it fires after slide-out)
+  const overlayEl = document.getElementById('ls-overlay');
+  if (overlayEl) {
+    const obs = new MutationObserver(() => {
+      if (!document.getElementById('ls-overlay')) { alive = false; renderer.dispose(); obs.disconnect(); }
+    });
+    obs.observe(overlayEl.parentElement!, { childList: true });
+  }
+
+  function tick(now: number) {
+    if (!alive) return;
+    const t = (now - start) * 0.001;
+
+    figs.forEach((fig, i) => {
+      fig.rotation.y = figDefs[i].ry + t * 0.28 * (i % 2 === 0 ? 1 : -1);
+      fig.position.y = Math.sin(t * figDefs[i].bob + i * 1.2) * 0.08;
+    });
+
+    scanPlanes.forEach(({ m, offset }) => {
+      m.position.y = Math.sin(t * 1.6 + offset) * 1.4;
+      (m.material as THREE.MeshBasicMaterial).opacity = 0.04 + Math.abs(Math.sin(t * 0.9 + offset)) * 0.06;
+    });
+
+    renderer.render(scene, camera);
+    requestAnimationFrame(tick);
+  }
+
+  requestAnimationFrame(tick);
+</script>

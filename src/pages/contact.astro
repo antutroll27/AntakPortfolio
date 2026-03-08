@@ -1,0 +1,103 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="Contact — Antariksha Kumar"
+  description="Get in touch with Antariksha Kumar — UX Engineer and Creative Technologist based in Nottingham, UK."
+>
+  <section class="px-4 pb-28 pt-28 md:px-8" id="contact">
+    <div class="mx-auto w-full max-w-5xl">
+
+      <div class="mb-10 flex items-center justify-between border-b border-grey pb-4">
+        <span class="font-montserrat text-[0.65rem] uppercase tracking-[0.25em] text-grey">/ Contact</span>
+        <span class="font-necto text-[0.65rem] text-grey">Nottingham, UK</span>
+      </div>
+
+      <h1
+        class="font-necto text-[clamp(2.8rem,8vw,6.5rem)] uppercase leading-[0.9]"
+        data-scramble-text
+      >
+        Let's Build
+        <span class="text-teal">Something</span>
+        Worth Seeing.
+      </h1>
+
+      <div class="mt-10 border-y border-grey py-6">
+        <p class="flex flex-wrap items-center gap-4 font-necto text-[1rem] uppercase tracking-[0.18em] md:text-[1.2rem]">
+          <span id="email">kumarantar98@gmail.com</span>
+          <button
+            type="button"
+            class="border border-teal px-3 py-1 font-necto text-[0.7rem] uppercase tracking-[0.22em] text-teal transition-colors hover:bg-teal hover:text-black"
+            data-copy-email
+            data-cursor-hover
+          >
+            → Copy
+          </button>
+        </p>
+      </div>
+
+      <div class="mt-8 flex flex-wrap gap-6 border-b border-grey pb-6 font-montserrat text-[0.75rem] uppercase tracking-[0.25em]">
+        <a
+          href="https://www.linkedin.com/in/antarik-k"
+          target="_blank"
+          rel="noreferrer"
+          class="text-offwhite/70 transition-colors hover:text-teal"
+          data-cursor-hover
+        >
+          LinkedIn ↗
+        </a>
+        <a
+          href="https://github.com/antutroll27"
+          target="_blank"
+          rel="noreferrer"
+          class="text-offwhite/70 transition-colors hover:text-teal"
+          data-cursor-hover
+        >
+          GitHub ↗
+        </a>
+      </div>
+
+      <p class="mt-8 font-necto text-[0.65rem] uppercase tracking-[0.2em] text-grey">
+        Status: <span class="text-teal">Available for freelance & full-time roles</span>
+      </p>
+
+    </div>
+  </section>
+</BaseLayout>
+
+<script>
+  const copyButton = document.querySelector('[data-copy-email]');
+  const email = document.querySelector('#email');
+  copyButton?.addEventListener('click', async () => {
+    if (!email) return;
+    await navigator.clipboard.writeText(email.textContent ?? '');
+    copyButton.textContent = 'Copied ✓';
+    setTimeout(() => { copyButton.textContent = '→ Copy'; }, 1400);
+  });
+
+  const target = document.querySelector('[data-scramble-text]');
+  if (target && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    import('gsap').then(({ gsap }) => {
+      const finalText = target.textContent;
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      let frame = 0;
+      gsap.to({}, {
+        duration: 1.2,
+        onUpdate: () => {
+          frame += 1;
+          const progress = Math.min(frame / 24, 1);
+          target.textContent = [...finalText]
+            .map((char, idx) => {
+              if (char === ' ' || char === '\n') return char;
+              return idx < progress * finalText.length
+                ? finalText[idx]
+                : chars[Math.floor(Math.random() * chars.length)];
+            })
+            .join('');
+        },
+        onComplete: () => { target.textContent = finalText; },
+      });
+    });
+  }
+</script>

@@ -1,0 +1,208 @@
+---
+import { ClientRouter } from 'astro:transitions';
+import Nav from '../components/layout/Nav.astro';
+import Footer from '../components/layout/Footer.astro';
+import CursorRing from '../components/ui/CursorRing.astro';
+import GridLines from '../components/ui/GridLines.astro';
+import LoadingScreen from '../components/ui/LoadingScreen.astro';
+import '../styles/global.css';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const {
+  title = 'Antariksha Kumar — UX Engineer / Creative Technologist',
+  description = 'Portfolio of Antariksha Kumar. Astro.js, Three.js, GSAP, Motion, and brutalist cyberpunk interaction design.'
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <ClientRouter />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content={description} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={Astro.url.href} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" />
+    <title>{title}</title>
+  </head>
+  <body class="bg-black text-offwhite selection:bg-teal/20">
+    <GridLines />
+    <LoadingScreen />
+    <Nav />
+    <CursorRing />
+    <main>
+      <slot />
+    </main>
+    <Footer />
+  </body>
+</html>
+
+<script>
+  // ── Navigation loading screen ─────────────────────────────────────────────
+  // Fires on every View Transition nav (NOT initial page load).
+  // Injects a minimal MGS overlay, delays the swap by 800ms, then lets
+  // astro:after-swap remove the new page's LoadingScreen component overlay.
+
+  const NAV_MS = 800;
+  const NAV_STATUSES = [
+    'INITIALIZING NEURAL INTERFACE...',
+    'ESTABLISHING ENCRYPTED UPLINK...',
+    'LOADING CODEC FREQUENCIES...',
+    'ACCESS GRANTED.',
+  ];
+  const NAV_SUBTITLES = [
+    'TACTICAL ESPIONAGE',
+    'GHOST PROTOCOL',
+    'CODEC // CONNECTED',
+    'OPERATIVE // A.K',
+    'CLASSIFIED BRIEF',
+    'SNEAKING MISSION',
+  ];
+  const NAV_TITLE  = 'ANTAKDESIGN';
+  const NAV_GLITCH = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%&*+-/\\░▒▓';
+  const TEAL = 'rgba(44,184,176,';
+  const FONT = "'NectoMono','Courier New',monospace";
+
+  function navScramble(target: string, revealed: number): string {
+    return target.split('').map((ch, i) =>
+      i < revealed ? ch : NAV_GLITCH[Math.floor(Math.random() * NAV_GLITCH.length)]
+    ).join('');
+  }
+
+  document.addEventListener('astro:before-preparation', (evt) => {
+    const event = evt as Event & { loader: () => Promise<void> };
+
+    // Build overlay
+    const ov = document.createElement('div');
+    ov.id = 'nav-loader';
+    ov.style.cssText =
+      `position:fixed;inset:0;z-index:9999999;background:#0d0d0f;` +
+      `display:flex;flex-direction:column;font-family:${FONT};`;
+
+    ov.innerHTML = `
+      <div id="nl-scan" style="position:absolute;left:0;right:0;height:1px;background:${TEAL}0.25);top:0;pointer-events:none"></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid ${TEAL}0.15);padding:10px 48px;flex-shrink:0">
+        <span style="font-size:9px;letter-spacing:4px;text-transform:uppercase;color:${TEAL}0.5)">ANTAKDESIGN.SYS</span>
+        <span id="nl-hex" style="font-size:9px;color:${TEAL}0.3)">0xFF000000</span>
+        <span style="font-size:9px;letter-spacing:4px;text-transform:uppercase;color:${TEAL}0.5)">NODE::ACTIVE</span>
+      </div>
+      <div style="flex:1;display:flex;align-items:center;justify-content:center">
+        <div style="text-align:center">
+          <p style="font-size:9px;letter-spacing:8px;text-transform:uppercase;color:${TEAL}0.4);margin:0 0 14px">NOW LOADING</p>
+          <p id="nl-title" style="font-size:clamp(2.5rem,7vw,5.5rem);text-transform:uppercase;line-height:1;color:rgba(232,230,223,0.88);margin:0;letter-spacing:0.04em" aria-label="ANTAKDESIGN">&#8203;</p>
+          <p id="nl-subtitle" style="font-size:9px;letter-spacing:4px;text-transform:uppercase;color:${TEAL}0.55);margin:8px 0 0;min-height:1.2em">&#8203;</p>
+        </div>
+      </div>
+      <div style="padding:16px 48px;flex-shrink:0">
+        <p id="nl-status" style="font-size:9px;letter-spacing:3px;text-transform:uppercase;color:${TEAL}0.65);margin:0 0 10px;min-height:14px">INITIALIZING...</p>
+        <div style="display:flex;align-items:center;gap:12px">
+          <div id="nl-blocks" style="display:flex;flex:1;gap:2px"></div>
+          <span id="nl-pct" style="font-size:10px;width:42px;text-align:right;font-variant-numeric:tabular-nums;color:${TEAL}0.65)">0%</span>
+        </div>
+        <div style="margin-top:8px;height:1px;width:100%;background:${TEAL}0.1)">
+          <div id="nl-bar" style="height:100%;width:0%;background:${TEAL}0.4)"></div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;border-top:1px solid ${TEAL}0.15);padding:10px 48px;flex-shrink:0">
+        <span style="font-size:9px;letter-spacing:3px;text-transform:uppercase;color:${TEAL}0.3)">MEMORY::LOADING</span>
+        <span id="nl-addr" style="font-size:9px;color:${TEAL}0.2)">0x0000</span>
+        <span style="font-size:9px;letter-spacing:3px;text-transform:uppercase;color:${TEAL}0.3)">©2025 AK</span>
+      </div>
+    `;
+
+    document.body.appendChild(ov);
+
+    // Animate
+    const BLOCKS = 20;
+    const blocksEl = ov.querySelector<HTMLElement>('#nl-blocks')!;
+    const pctEl    = ov.querySelector<HTMLElement>('#nl-pct')!;
+    const statusEl = ov.querySelector<HTMLElement>('#nl-status')!;
+    const barEl    = ov.querySelector<HTMLElement>('#nl-bar')!;
+    const hexEl    = ov.querySelector<HTMLElement>('#nl-hex')!;
+    const addrEl   = ov.querySelector<HTMLElement>('#nl-addr')!;
+    const scanEl   = ov.querySelector<HTMLElement>('#nl-scan')!;
+
+    for (let i = 0; i < BLOCKS; i++) {
+      const s = document.createElement('span');
+      s.style.cssText = `display:block;flex:1;height:6px;background:${TEAL}0.12)`;
+      blocksEl.appendChild(s);
+    }
+    const blockEls = Array.from(blocksEl.children) as HTMLElement[];
+
+    const titleEl    = ov.querySelector<HTMLElement>('#nl-title');
+    const subtitleEl = ov.querySelector<HTMLElement>('#nl-subtitle');
+    const t0 = performance.now();
+    let hexTick = 0, scanY = 0, prevSi = -1;
+
+    (function frame(now: number) {
+      if (!document.body.contains(ov)) return;
+      const elapsed = now - t0;
+      const p   = Math.min(1, elapsed / NAV_MS);
+      const pct = Math.round(p * 100);
+
+      pctEl.textContent = `${pct}%`;
+      barEl.style.width = `${pct}%`;
+
+      const filled = Math.floor(p * BLOCKS);
+      blockEls.forEach((b, i) => {
+        b.style.background = i < filled ? 'rgb(44,184,176)' : `${TEAL}0.12)`;
+      });
+
+      const si = Math.min(NAV_STATUSES.length - 1, Math.floor(p * NAV_STATUSES.length));
+      if (si !== prevSi) { prevSi = si; statusEl.textContent = NAV_STATUSES[si]; }
+
+      // Title scramble
+      if (titleEl) {
+        const revealed = Math.floor(Math.min(1, p / 0.6) * NAV_TITLE.length);
+        titleEl.textContent = navScramble(NAV_TITLE, revealed);
+      }
+      // Subtitle cycle
+      if (subtitleEl) {
+        subtitleEl.textContent = NAV_SUBTITLES[Math.floor(elapsed / 130) % NAV_SUBTITLES.length];
+      }
+
+      scanY = (scanY + 4) % window.innerHeight;
+      scanEl.style.top = `${scanY}px`;
+
+      if (++hexTick % 4 === 0) {
+        hexEl.textContent  = '0x' + ((Math.random() * 0xFFFFFFFF) >>> 0).toString(16).toUpperCase().padStart(8, '0');
+        addrEl.textContent = '0x' + ((Math.random() * 0xFFFF) >>> 0).toString(16).toUpperCase().padStart(4, '0');
+      }
+
+      if (p < 1) requestAnimationFrame(frame);
+    })(t0);
+
+    // Delay the actual swap until 800ms have passed
+    const orig = event.loader;
+    event.loader = async () => {
+      try {
+        await Promise.all([orig(), new Promise<void>(r => setTimeout(r, NAV_MS))]);
+      } catch (e) {
+        ov.remove();
+        throw e;
+      }
+    };
+  });
+
+  // Make the View Transition an instant cut (our overlay IS the transition)
+  document.addEventListener('astro:before-swap', (evt) => {
+    const event = evt as Event & { viewTransition?: { skipTransition?(): void } };
+    if (document.getElementById('nav-loader')) {
+      event.viewTransition?.skipTransition?.();
+    }
+  });
+
+  // After swap: remove the new page's first-visit LoadingScreen overlay
+  document.addEventListener('astro:after-swap', () => {
+    document.getElementById('ls-overlay')?.remove();
+  });
+</script>
+

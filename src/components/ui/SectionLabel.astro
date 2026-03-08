@@ -1,0 +1,11 @@
+---
+interface Props {
+  label: string;
+  class?: string;
+}
+
+const { label, class: className = '' } = Astro.props;
+---
+
+<p class={`font-montserrat text-[0.75rem] uppercase tracking-[0.3em] text-offwhite/75 ${className}`}>/ {label}</p>
+

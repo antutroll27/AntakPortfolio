@@ -1,0 +1,44 @@
+---
+import SectionLabel from '../ui/SectionLabel.astro';
+---
+
+<section id="about" class="border-b border-grey px-4 py-24 md:px-8">
+  <div class="mx-auto grid w-full max-w-7xl gap-10 md:grid-cols-[3fr_2fr] md:gap-12">
+    <div class="space-y-6">
+      <SectionLabel label="About" />
+      <h2 class="font-serif text-[clamp(2.6rem,5.5vw,5rem)] leading-[1.08] text-offwhite">
+        I design in the browser and engineer with intent.
+      </h2>
+      <div class="space-y-4 text-[1.125rem] leading-[1.75] text-offwhite/88">
+        <p>
+          UX Designer, Front-End Engineer, and Creative Technologist with an MSc in Human-Computer Interaction from
+          the University of Nottingham. I bridge rigorous user-centred research with pixel-perfect interfaces built in
+          Astro.js, TypeScript, and Tailwind CSS.
+        </p>
+        <p>
+          COO at Infotik. I experiment with AR/VR prototypes, streetwear design at Midnight Drift Club (stealth mode),
+          and AI-driven tools like VeroCasaAI. The goal is always the same: elevate everyday interactions into
+          memorable moments through thoughtful design and elegant code.
+        </p>
+        <p>
+          Award-winning indie film background as lighting and camera assistant. The cinematic eye still shapes every
+          interface decision.
+        </p>
+      </div>
+      <p class="border-t border-grey pt-4 font-necto text-[0.72rem] uppercase tracking-[0.2em] text-teal/85">
+        Based in: Nottingham, UK · Available: Yes · MSc HCI: Nottingham
+      </p>
+    </div>
+
+    <aside class="relative border border-teal-dim p-4">
+      <span class="absolute left-2 top-2 font-necto text-[0.65rem] text-teal-dim">X:00</span>
+      <span class="absolute right-2 top-2 font-necto text-[0.65rem] text-teal-dim">Y:00</span>
+      <span class="absolute bottom-2 left-2 font-necto text-[0.65rem] text-teal-dim">Z:00</span>
+      <span class="absolute bottom-2 right-2 font-necto text-[0.65rem] text-teal-dim">V.01</span>
+      <div class="grid min-h-[360px] place-items-center border border-grey bg-surface/70">
+        <p class="font-necto text-[0.8rem] uppercase tracking-[0.22em] text-offwhite/60">Portrait Placeholder</p>
+      </div>
+    </aside>
+  </div>
+</section>
+

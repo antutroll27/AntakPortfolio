@@ -1,0 +1,176 @@
+---
+const navItems = [
+  { href: "/work", label: "Work" },
+  { href: "/about", label: "About" },
+  { href: "/blog", label: "Blog" },
+  { href: "/contact", label: "Contact" },
+];
+
+const isHome = Astro.url.pathname === "/";
+const path = Astro.url.pathname;
+---
+
+<header
+  class="pointer-events-none fixed left-0 right-0 top-4 z-[100] px-3 md:px-6 pt-5 pl-10"
+  data-nav-shell
+>
+  <div
+    class="pointer-events-auto relative mx-auto max-w-[780px] border border-white/10 bg-transparent backdrop-blur-[16px] transition-colors duration-300"
+    data-nav-box
+  >
+    <nav
+      class="flex h-[52px] items-stretch justify-between"
+      aria-label="Primary"
+    >
+      <!-- Brand / Home -->
+      <a
+        href="/"
+        class:list={[
+          "hidden md:flex items-center px-6 font-necto text-[0.78rem] uppercase tracking-[0.2em] transition-colors duration-300 border-r border-current/[0.12]",
+          isHome ? "text-teal" : "text-offwhite/70 hover:text-teal",
+        ]}
+        data-nav-link
+        data-cursor-hover
+        aria-label="Home"
+      >
+        ANTARIK.K
+      </a>
+
+      <!-- Desktop links -->
+      <ul class="hidden h-full items-stretch gap-0 md:flex">
+        {
+          navItems.map(({ href, label }) => (
+            <li class="flex items-stretch">
+              <a
+                href={href}
+                class:list={[
+                  "flex items-center px-5 font-montserrat text-[0.7rem] uppercase tracking-[0.25em] transition-colors duration-300",
+                  path.startsWith(href)
+                    ? "text-teal"
+                    : "text-offwhite/90 hover:text-teal",
+                ]}
+                data-nav-link
+                data-cursor-hover
+              >
+                {label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+
+      <!-- Mobile menu trigger -->
+      <button
+        class="flex items-center px-5 font-necto text-[0.75rem] uppercase tracking-[0.2em] md:hidden"
+        data-menu-trigger
+        data-nav-link
+        data-cursor-hover
+        aria-label="Open menu"
+      >
+        Menu
+      </button>
+
+      <!-- Available indicator -->
+      <p
+        class="hidden items-center gap-2 border-l border-current/[0.12] px-6 font-necto text-[0.65rem] uppercase tracking-[0.2em] md:flex ml-auto"
+        data-nav-link
+      >
+        <span class="inline-block h-2 w-2 animate-pulse rounded-full bg-teal"></span>
+        Available
+      </p>
+    </nav>
+  </div>
+
+  <!-- Mobile fullscreen menu -->
+  <div
+    class="pointer-events-none fixed inset-0 z-[90] hidden bg-black/95 p-8"
+    data-menu-overlay
+  >
+    <div class="flex h-full flex-col justify-center gap-7">
+      <a
+        href="/"
+        class="font-necto text-[clamp(2rem,8vw,4rem)] uppercase leading-none text-teal"
+        data-cursor-hover
+      >Home</a>
+      {
+        navItems.map(({ href, label }) => (
+          <a
+            href={href}
+            class="font-necto text-[clamp(2rem,8vw,4rem)] uppercase leading-none"
+            data-cursor-hover
+          >
+            {label}
+          </a>
+        ))
+      }
+    </div>
+  </div>
+</header>
+
+<style is:global>
+  /* Adaptive nav: dark text when floating over light backgrounds */
+  [data-nav-box].nav-on-light {
+    border-color: rgba(0, 0, 0, 0.1) !important;
+    background: rgba(240, 238, 232, 0.18) !important;
+  }
+  [data-nav-box].nav-on-light [data-nav-link] {
+    color: rgba(10, 10, 12, 0.92);
+  }
+  [data-nav-box].nav-on-light [data-nav-link]:hover {
+    color: var(--color-teal);
+  }
+  /* Teal active links always stay teal */
+  [data-nav-box].nav-on-light .text-teal {
+    color: var(--color-teal) !important;
+  }
+</style>
+
+<script>
+  function initNav() {
+    const navBox  = document.querySelector<HTMLElement>("[data-nav-box]");
+    const trigger = document.querySelector("[data-menu-trigger]");
+    const overlay = document.querySelector<HTMLElement>("[data-menu-overlay]");
+    if (!navBox) return;
+
+    // ── Scroll border ────────────────────────────────────────────────────────
+    const onScroll = () => {
+      navBox.classList.toggle("!border-teal/[0.08]", window.scrollY > 80);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+
+    // ── Light-background detection ───────────────────────────────────────────
+    // Finds any element with bg-offwhite or [data-light-section] on the page
+    // and switches nav to dark text when that element occupies the nav band.
+    const lightEls = Array.from(
+      document.querySelectorAll<HTMLElement>(".bg-offwhite, [data-light-section]")
+    );
+
+    function checkLight() {
+      if (!lightEls.length) {
+        navBox!.classList.remove("nav-on-light");
+        return;
+      }
+      const NAV_BOTTOM = 90; // px from top of viewport
+      const isLight = lightEls.some((el) => {
+        const r = el.getBoundingClientRect();
+        return r.top < NAV_BOTTOM && r.bottom > 0;
+      });
+      navBox!.classList.toggle("nav-on-light", isLight);
+    }
+
+    checkLight();
+    window.addEventListener("scroll", checkLight, { passive: true });
+
+    // ── Mobile menu ──────────────────────────────────────────────────────────
+    if (trigger && overlay) {
+      trigger.addEventListener("click", () => {
+        const isHidden = overlay.classList.toggle("hidden");
+        overlay.classList.toggle("pointer-events-none", isHidden);
+        trigger.setAttribute("aria-label", isHidden ? "Open menu" : "Close menu");
+      });
+    }
+  }
+
+  document.addEventListener("astro:page-load", initNav);
+</script>
